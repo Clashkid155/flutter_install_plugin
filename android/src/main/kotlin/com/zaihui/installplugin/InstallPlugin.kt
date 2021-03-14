@@ -53,6 +53,14 @@ class InstallPlugin(private val registrar: Registrar) : MethodCallHandler {
             "getPlatformVersion" -> {
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
             }
+            "requestPermission" -> {
+                try {
+                    requestPermission()
+                    result.success("Success")
+                } catch(e: Throwable){
+                    result.error(e.javaClass.simpleName, e.message, null)
+                }
+            }
             "installApk" -> {
                 val filePath = call.argument<String>("filePath")
                 val appId = call.argument<String>("appId")
@@ -129,5 +137,16 @@ class InstallPlugin(private val registrar: Registrar) : MethodCallHandler {
         val uri: Uri = FileProvider.getUriForFile(context, "$appId.fileProvider.install", file)
         intent.setDataAndType(uri, "application/vnd.android.package-archive")
         context.startActivity(intent)
+    }
+     private fun requestPermission() {
+         val activity: Activity =
+            registrar.activity() ?: throw NullPointerException("context is null!")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (canRequestPackageInstalls(activity))
+            else {
+                showSettingPackageInstall(activity)
+            }
+
+        }
     }
 }
